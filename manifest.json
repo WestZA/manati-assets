@@ -2,12 +2,12 @@
   "name": "Manati Asset Manager",
   "short_name": "Manati Assets",
   "description": "Asset management system for Manati Alternate Student Funding",
-  "start_url": "/index.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#1A1A1A",
   "theme_color": "#1A1A1A",
-  "scope": "/",
+  "scope": "./",
   "icons": [
     {
       "src": "icons/icon-72.png",
