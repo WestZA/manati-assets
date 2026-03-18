@@ -272,7 +272,6 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:var(--b
 <div class="sg"><div style="padding:14px"><input class="fi" type="password" id="cfKey" placeholder="sk-ant-..." style="font-size:12px;font-family:'JetBrains Mono',monospace"><div class="fh">For reading serial numbers from photos</div></div></div>
 <div class="sh"><span class="st">Employees</span></div>
 <div class="sg"><div class="si2"><div><div class="sit">Manage Employees</div><div class="sid">Add, edit, remove staff</div></div><span style="color:var(--y);cursor:pointer;font-weight:600;font-size:13px" onclick="openEM()">Edit →</span></div></div>
-<button class="btn bp" onclick="syncFromSheet();toast('Syncing...','success')" style="margin-top:6px">Sync All Devices Now</button>
 <button class="btn bp" onclick="savCfg()" style="margin-top:6px">Save Settings</button>
 <button class="btn bs" onclick="expD()" style="margin-top:6px">Export Data (JSON)</button>
 <button class="btn bd" onclick="clrD()" style="margin-top:6px">Clear All Data</button>
@@ -318,7 +317,7 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:var(--b
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <script>
 const DB='manati_assets',SK='manati_settings',EK='manati_employees';
-const API_URL='https://script.google.com/macros/s/AKfycby4fg01H6IVxLRrXINtvhaMD_wDRqqRgIpvCOfWCUxmPky4eku0kz0lDYSqBuE6HN0z/exec';
+const API_URL='https://script.google.com/macros/s/AKfycbxu4rWpHTnCXkubXKeTyBP976JXkR1C3W2FzhfV4BJaAdFjwb1FsdBBIrYe4Hc9wGr2/exec';
 const ld=k=>{try{return JSON.parse(localStorage.getItem(k))||[]}catch{return[]}};
 const sv=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
 const lo=k=>{try{return JSON.parse(localStorage.getItem(k))||{}}catch{return{}}};
@@ -332,7 +331,7 @@ function nav(s){
   document.getElementById('screen-'+s).classList.add('active');
   document.querySelectorAll('.nn').forEach(n=>n.classList.remove('on'));
   const n=document.querySelector('.nn[data-s="'+s+'"]');if(n)n.classList.add('on');
-  if(s==='home'){refH();syncFromSheet();}if(s==='assets'){refAL();syncFromSheet();}if(s==='scan')resSc();if(s==='settings')ldCfg();
+  if(s==='home')refH();if(s==='assets')refAL();if(s==='scan')resSc();if(s==='settings')ldCfg();
   window.scrollTo(0,0);
 }
 
@@ -648,12 +647,15 @@ function sL(t){document.getElementById('loT').textContent=t;document.getElementB
 function hL(){document.getElementById('loO').classList.remove('active');}
 function uSt(on){document.getElementById('sDot').className='sdot'+(on?'':' off');document.getElementById('sTxt').textContent=on?'Synced':'Offline';}
 
-if('serviceWorker' in navigator)window.addEventListener('load',async()=>{try{await navigator.serviceWorker.register('./sw.js');}catch{}});
+// Unregister any old service workers to clear stale caches
+if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(regs){regs.forEach(function(r){r.unregister();});});}
 window.addEventListener('online',()=>{uSt(true);syncFromSheet();});
 window.addEventListener('offline',()=>uSt(false));
 refH();uSt(navigator.onLine);
-// Sync data from Google Sheet on startup
+// Sync on startup
 syncFromSheet();
+// Auto-sync every 30 seconds
+setInterval(syncFromSheet,30000);
 </script>
 </body>
 </html>
