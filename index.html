@@ -268,12 +268,11 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:var(--b
 <!-- SETTINGS -->
 <div class="screen" id="screen-settings">
 <h2 style="font-size:18px;font-weight:700;margin-bottom:14px">Settings</h2>
-<div class="sh"><span class="st">Google Sheets</span></div>
-<div class="sg"><div style="padding:14px"><input class="fi" type="text" id="cfUrl" placeholder="Apps Script Web App URL (optional - already built in)" style="font-size:12px;font-family:'JetBrains Mono',monospace"><div class="fh">Only change this if you redeploy the Apps Script</div></div></div>
 <div class="sh"><span class="st">Claude API (Serial OCR)</span></div>
 <div class="sg"><div style="padding:14px"><input class="fi" type="password" id="cfKey" placeholder="sk-ant-..." style="font-size:12px;font-family:'JetBrains Mono',monospace"><div class="fh">For reading serial numbers from photos</div></div></div>
 <div class="sh"><span class="st">Employees</span></div>
 <div class="sg"><div class="si2"><div><div class="sit">Manage Employees</div><div class="sid">Add, edit, remove staff</div></div><span style="color:var(--y);cursor:pointer;font-weight:600;font-size:13px" onclick="openEM()">Edit →</span></div></div>
+<button class="btn bp" onclick="syncFromSheet();toast('Syncing...','success')" style="margin-top:6px">Sync All Devices Now</button>
 <button class="btn bp" onclick="savCfg()" style="margin-top:6px">Save Settings</button>
 <button class="btn bs" onclick="expD()" style="margin-top:6px">Export Data (JSON)</button>
 <button class="btn bd" onclick="clrD()" style="margin-top:6px">Clear All Data</button>
@@ -319,8 +318,7 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:var(--b
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <script>
 const DB='manati_assets',SK='manati_settings',EK='manati_employees';
-const DEFAULT_API='https://script.google.com/macros/s/AKfycbxu4rWpHTnCXkubXKeTyBP976JXkR1C3W2FzhfV4BJaAdFjwb1FsdBBIrYe4Hc9wGr2/exec';
-function getApiUrl(){const s=lo(SK);return s.appsScriptUrl||DEFAULT_API;}
+const API_URL='https://script.google.com/macros/s/AKfycbxu4rWpHTnCXkubXKeTyBP976JXkR1C3W2FzhfV4BJaAdFjwb1FsdBBIrYe4Hc9wGr2/exec';
 const ld=k=>{try{return JSON.parse(localStorage.getItem(k))||[]}catch{return[]}};
 const sv=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
 const lo=k=>{try{return JSON.parse(localStorage.getItem(k))||{}}catch{return{}}};
@@ -334,7 +332,7 @@ function nav(s){
   document.getElementById('screen-'+s).classList.add('active');
   document.querySelectorAll('.nn').forEach(n=>n.classList.remove('on'));
   const n=document.querySelector('.nn[data-s="'+s+'"]');if(n)n.classList.add('on');
-  if(s==='home'){refH();syncFromSheet();}if(s==='assets')refAL();if(s==='scan')resSc();if(s==='settings')ldCfg();
+  if(s==='home'){refH();syncFromSheet();}if(s==='assets'){refAL();syncFromSheet();}if(s==='scan')resSc();if(s==='settings')ldCfg();
   window.scrollTo(0,0);
 }
 
@@ -579,7 +577,7 @@ async function shareQR(){
 function dlBlob(b){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='manati-qr-labels.png';a.click();toast('Downloaded','success');}
 
 async function push(a){
-  const url=getApiUrl();if(!url)return;
+  const url=API_URL;
   try{
     await fetch(url,{
       method:'POST',
@@ -597,21 +595,21 @@ async function push(a){
 }
 
 async function pushEmployee(emp){
-  const url=getApiUrl();if(!url)return;
+  const url=API_URL;
   try{
     await fetch(url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'upsert_employee',employee:{name:emp.name,dept:emp.dept,staffType:emp.staffType}})});
   }catch{}
 }
 
 async function deleteEmployee(name){
-  const url=getApiUrl();if(!url)return;
+  const url=API_URL;
   try{
     await fetch(url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'delete_employee',name:name})});
   }catch{}
 }
 
 async function syncFromSheet(){
-  const url=getApiUrl();if(!url)return;
+  const url=API_URL;
   try{
     const r=await fetch(url+'?action=get_all',{method:'GET',redirect:'follow'});
     const d=await r.json();
@@ -621,7 +619,7 @@ async function syncFromSheet(){
         E=[{name:'Unassigned',dept:'N/A',id:'u'},...d.employees];
         sv(EK,E);
       }
-      refH();
+      refH();refAL();
       uSt(true);
     }
   }catch(e){console.error('Sync failed:',e);uSt(false);}
@@ -640,8 +638,8 @@ function rEM(){const el=document.getElementById('emL'),ls=E.filter(e=>e.id!=='u'
 function addE(){const n=document.getElementById('nEN').value.trim(),d=document.getElementById('nED').value,t=document.getElementById('nET').value;if(!n){toast('Enter name','error');return;}const emp={name:n,dept:d,staffType:t,id:'e-'+Date.now()};E.push(emp);sv(EK,E);pushEmployee(emp);document.getElementById('nEN').value='';rEM();toast('Added '+n,'success');}
 function remE(i){if(i<1||i>=E.length)return;if(confirm('Remove '+E[i].name+'?')){const name=E[i].name;E.splice(i,1);sv(EK,E);deleteEmployee(name);rEM();}}
 
-function ldCfg(){const s=lo(SK);document.getElementById('cfUrl').value=s.appsScriptUrl||'';document.getElementById('cfKey').value=s.claudeApiKey||'';}
-function savCfg(){const s={appsScriptUrl:document.getElementById('cfUrl').value.trim(),claudeApiKey:document.getElementById('cfKey').value.trim()};localStorage.setItem(SK,JSON.stringify(s));C=s;toast('Settings saved — syncing data...','success');syncFromSheet();}
+function ldCfg(){const s=lo(SK);document.getElementById('cfKey').value=s.claudeApiKey||'';}
+function savCfg(){const prev=lo(SK);prev.claudeApiKey=document.getElementById('cfKey').value.trim();localStorage.setItem(SK,JSON.stringify(prev));C=prev;toast('Settings saved','success');}
 function expD(){const d={assets:A,employees:E,settings:lo(SK),exported:new Date().toISOString()};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:'application/json'}));a.download='manati-assets-'+new Date().toISOString().split('T')[0]+'.json';a.click();}
 function clrD(){if(confirm('Delete ALL data? Cannot be undone.')){if(confirm('Absolutely sure?')){localStorage.removeItem(DB);localStorage.removeItem(EK);A=[];E=[{name:'Unassigned',dept:'N/A',id:'u'}];sv(EK,E);toast('All data cleared','success');nav('home');}}}
 
@@ -651,7 +649,7 @@ function hL(){document.getElementById('loO').classList.remove('active');}
 function uSt(on){document.getElementById('sDot').className='sdot'+(on?'':' off');document.getElementById('sTxt').textContent=on?'Synced':'Offline';}
 
 if('serviceWorker' in navigator)window.addEventListener('load',async()=>{try{await navigator.serviceWorker.register('./sw.js');}catch{}});
-window.addEventListener('online',()=>uSt(true));
+window.addEventListener('online',()=>{uSt(true);syncFromSheet();});
 window.addEventListener('offline',()=>uSt(false));
 refH();uSt(navigator.onLine);
 // Sync data from Google Sheet on startup
