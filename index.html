@@ -456,26 +456,32 @@ async function startCam(){
   try{
     document.getElementById('camBox').style.display='block';
     if(strm)strm.getTracks().forEach(t=>t.stop());
-    const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:1280}}});
+    const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}});
     strm=s;const video=document.getElementById('vid');video.srcObject=s;
+    await video.play();
     document.getElementById('ssb').innerHTML='<span style="font-size:18px">⏳</span><div><h4>Scanning...</h4><p>Looking for QR code</p></div>';
     toast('Camera active','success');
     const scanCanvas=document.createElement('canvas');
     const scanCtx=scanCanvas.getContext('2d',{willReadFrequently:true});
+    // Create BarcodeDetector once if available
+    let nativeDet=null;
+    if('BarcodeDetector' in window){try{nativeDet=new BarcodeDetector({formats:['qr_code']});}catch(e){}}
     const iv=setInterval(()=>{
       if(!strm){clearInterval(iv);return;}
       if(video.readyState!==video.HAVE_ENOUGH_DATA)return;
-      if('BarcodeDetector' in window){
-        const det=new BarcodeDetector({formats:['qr_code']});
-        det.detect(video).then(codes=>{if(codes.length>0){clearInterval(iv);scId=codes[0].rawValue;handleScan(scId);}}).catch(()=>{});
-      }else if(typeof jsQR!=='undefined'){
+      // Try native first (Android Chrome)
+      if(nativeDet){
+        nativeDet.detect(video).then(codes=>{if(codes.length>0){clearInterval(iv);scId=codes[0].rawValue;handleScan(scId);}}).catch(()=>{});
+      }
+      // Always also try jsQR (works on all browsers including iOS)
+      if(typeof jsQR!=='undefined'){
         scanCanvas.width=video.videoWidth;scanCanvas.height=video.videoHeight;
         scanCtx.drawImage(video,0,0,scanCanvas.width,scanCanvas.height);
         const imgData=scanCtx.getImageData(0,0,scanCanvas.width,scanCanvas.height);
-        const code=jsQR(imgData.data,imgData.width,imgData.height,{inversionAttempts:'dontInvert'});
+        const code=jsQR(imgData.data,imgData.width,imgData.height,{inversionAttempts:'attemptBoth'});
         if(code&&code.data){clearInterval(iv);scId=code.data;handleScan(scId);}
       }
-    },300);
+    },250);
   }catch(e){toast('Camera access denied','error');}
 }
 function showManualInput(){document.getElementById('manualIdBox').style.display='block';document.getElementById('manualIdInput').value='';document.getElementById('manualIdInput').focus();}
