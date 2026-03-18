@@ -3,7 +3,7 @@
 // Handles offline caching and background sync
 // ============================================================
 
-const CACHE_NAME = 'manati-assets-v1';
+const CACHE_NAME = 'manati-assets-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
