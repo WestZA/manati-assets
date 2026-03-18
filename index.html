@@ -316,6 +316,7 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:var(--b
 <input type="file" id="sfI" accept="image/*" capture="environment" style="display:none" onchange="hSP(event)">
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <script>
 const DB='manati_assets',SK='manati_settings',EK='manati_employees';
 const ld=k=>{try{return JSON.parse(localStorage.getItem(k))||[]}catch{return[]}};
@@ -360,20 +361,38 @@ async function startCam(){
     document.getElementById('camBox').style.display='block';
     if(strm)strm.getTracks().forEach(t=>t.stop());
     const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:1280}}});
-    strm=s;document.getElementById('vid').srcObject=s;
+    strm=s;const video=document.getElementById('vid');video.srcObject=s;
     document.getElementById('ssb').innerHTML='<span style="font-size:18px">⏳</span><div><h4>Scanning...</h4><p>Looking for QR code</p></div>';
     toast('Camera active','success');
-    if('BarcodeDetector' in window){
-      const det=new BarcodeDetector({formats:['qr_code']});
-      const iv=setInterval(async()=>{
-        if(!strm){clearInterval(iv);return;}
-        try{const c=await det.detect(document.getElementById('vid'));
-          if(c.length>0&&c[0].rawValue.startsWith('MAN-')){clearInterval(iv);scId=c[0].rawValue;handleScan(scId);}
-        }catch{}
-      },400);
-    } else {
-      toast('QR detection not supported in this browser. Tap Manual ID.','error');
-    }
+
+    // Canvas for frame capture (used by jsQR fallback)
+    const scanCanvas=document.createElement('canvas');
+    const scanCtx=scanCanvas.getContext('2d',{willReadFrequently:true});
+
+    const iv=setInterval(()=>{
+      if(!strm){clearInterval(iv);return;}
+      if(video.readyState!==video.HAVE_ENOUGH_DATA)return;
+
+      // Try native BarcodeDetector first (Chrome/Android)
+      if('BarcodeDetector' in window){
+        const det=new BarcodeDetector({formats:['qr_code']});
+        det.detect(video).then(codes=>{
+          if(codes.length>0&&codes[0].rawValue.startsWith('MAN-')){
+            clearInterval(iv);scId=codes[0].rawValue;handleScan(scId);
+          }
+        }).catch(()=>{});
+      }
+      // jsQR fallback (Safari/iOS and everything else)
+      else if(typeof jsQR!=='undefined'){
+        scanCanvas.width=video.videoWidth;scanCanvas.height=video.videoHeight;
+        scanCtx.drawImage(video,0,0,scanCanvas.width,scanCanvas.height);
+        const imgData=scanCtx.getImageData(0,0,scanCanvas.width,scanCanvas.height);
+        const code=jsQR(imgData.data,imgData.width,imgData.height,{inversionAttempts:'dontInvert'});
+        if(code&&code.data&&code.data.startsWith('MAN-')){
+          clearInterval(iv);scId=code.data;handleScan(scId);
+        }
+      }
+    },300);
   }catch(e){toast('Camera access denied. Check permissions.','error');console.error(e);}
 }
 
@@ -582,7 +601,7 @@ function sL(t){document.getElementById('loT').textContent=t;document.getElementB
 function hL(){document.getElementById('loO').classList.remove('active');}
 function uSt(on){document.getElementById('sDot').className='sdot'+(on?'':' off');document.getElementById('sTxt').textContent=on?'Synced':'Offline';}
 
-if('serviceWorker' in navigator)window.addEventListener('load',async()=>{try{await navigator.serviceWorker.register('/sw.js');}catch{}});
+if('serviceWorker' in navigator)window.addEventListener('load',async()=>{try{await navigator.serviceWorker.register('./sw.js');}catch{}});
 window.addEventListener('online',()=>uSt(true));
 window.addEventListener('offline',()=>uSt(false));
 refH();uSt(navigator.onLine);
