@@ -113,10 +113,11 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:var(--b
 .an{font-size:15px;font-weight:600;margin-bottom:6px}
 .ads{display:flex;flex-wrap:wrap;gap:8px}
 .ade{font-size:11px;color:var(--g3);display:flex;align-items:center;gap:3px}.ade strong{color:var(--g2)}
-.del-btn{position:absolute;top:12px;right:12px;width:30px;height:30px;border-radius:50%;background:var(--rbg);border:1px solid rgba(230,57,58,0.2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--red);transition:all .15s}
+.del-btn{display:inline-flex;align-items:center;gap:4px;padding:8px 14px;border-radius:var(--rs);background:var(--rbg);border:1px solid rgba(230,57,58,0.2);cursor:pointer;font-size:11px;font-weight:600;color:var(--red);transition:all .15s;margin-top:10px}
 .del-btn:active{background:var(--red);color:#fff}
-.select-cb{position:absolute;top:14px;left:14px;width:22px;height:22px;accent-color:var(--red);cursor:pointer;display:none}
-.bulk-mode .select-cb{display:block}
+.select-cb{width:22px;height:22px;accent-color:var(--red);cursor:pointer;display:none;margin-top:10px}
+.bulk-mode .select-cb{display:inline-block}
+.ac-actions{display:flex;align-items:center;gap:8px}
 .bulk-bar{display:none;background:var(--bg2);border:1px solid rgba(230,57,58,0.2);border-radius:var(--rs);padding:12px 16px;margin-bottom:12px;align-items:center;justify-content:space-between}
 .bulk-bar.active{display:flex}
 
@@ -234,8 +235,8 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:var(--b
 </div>
 <div class="acard" onclick="nav('generate')">
 <div style="font-size:28px;margin-bottom:8px">🏷️</div>
-<div style="font-size:14px;font-weight:600">QR Label Generator</div>
-<div style="font-size:11px;color:var(--g3);margin-top:2px">Generate, share & print QR codes</div>
+<div style="font-size:14px;font-weight:600">Generate Asset Tags</div>
+<div style="font-size:11px;color:var(--g3);margin-top:2px">Print QR tags for new assets</div>
 </div>
 <div class="sh"><span class="st">Recent Activity</span><span class="sl" onclick="nav('assets')">View All</span></div>
 <div class="alist" id="aList"><div class="es"><h3>No activity yet</h3><p>Scan QR codes to register assets</p></div></div>
@@ -313,13 +314,15 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:var(--b
 
 <!-- QR LABELS -->
 <div class="screen" id="screen-generate">
-<h2 style="font-size:18px;font-weight:700;margin-bottom:14px">QR Label Generator</h2>
-<p style="font-size:12px;color:var(--g3);margin-bottom:14px;line-height:1.5">Generate clean QR codes. Share to your label printer app.</p>
-<div class="fg"><label class="fl">Generate For</label><select class="fse" id="qSc" onchange="document.getElementById('qCS').style.display=this.value==='category'?'block':'none';document.getElementById('qSI').style.display=this.value==='single'?'block':'none'"><option value="all">All Assets</option><option value="category">Specific Category</option><option value="single">Single Asset</option></select></div>
-<div class="fg" id="qCS" style="display:none"><label class="fl">Category</label><select class="fse" id="qCat"><option value="Laptop">Laptops</option><option value="Monitor">Monitors</option><option value="Desk">Desks</option><option value="Chair">Chairs</option><option value="UPS">UPS</option></select></div>
-<div class="fg" id="qSI" style="display:none"><label class="fl">Asset ID</label><input class="fi" type="text" id="qSingleId" placeholder="e.g. MAN-LAP-001" style="font-family:'JetBrains Mono',monospace;text-transform:uppercase"></div>
-<button class="btn bp" onclick="genQR()">🏷️ Generate Labels</button>
+<h2 style="font-size:18px;font-weight:700;margin-bottom:14px">Generate Asset Tags</h2>
+<p style="font-size:12px;color:var(--g3);margin-bottom:14px;line-height:1.5">Generate new QR code tags with unique IDs. Print them and stick on assets before scanning.</p>
+<div class="fg"><label class="fl">Category</label><select class="fse" id="tagCat"><optgroup label="Electronics"><option value="Laptop">Laptop (LAP)</option><option value="Monitor">Monitor (MON)</option><option value="UPS">UPS (UPS)</option><option value="Desktop">Desktop (DES)</option><option value="Phone">Phone (PHN)</option><option value="Tablet">Tablet (TAB)</option><option value="Headset">Headset (HDS)</option><option value="Other Electronics">Other Electronics (ELC)</option></optgroup><optgroup label="Furniture"><option value="Desk">Desk (DSK)</option><option value="Chair">Chair (CHR)</option><option value="Filing Cabinet">Filing Cabinet (FLC)</option><option value="Bookshelf">Bookshelf (BKS)</option><option value="Other Furniture">Other Furniture (FRN)</option></optgroup><optgroup label="Office Equipment"><option value="Printer">Printer (PRT)</option><option value="Scanner">Scanner (SCN)</option><option value="Projector">Projector (PRJ)</option><option value="Whiteboard">Whiteboard (WBD)</option><option value="Other Equipment">Other Equipment (EQP)</option></optgroup><optgroup label="Other"><option value="Kitchen">Kitchen (KTC)</option><option value="Keys">Keys / Access (KEY)</option><option value="Safety">Safety / OHS (SAF)</option><option value="Other">Other (OTH)</option></optgroup></select></div>
+<div style="display:flex;gap:8px;margin-bottom:14px"><div style="flex:1"><label class="fl">How many?</label><input class="fi" type="number" id="tagCount" value="1" min="1" max="50" style="font-family:'JetBrains Mono',monospace"></div><div style="display:flex;align-items:flex-end;gap:6px"><button class="btn bp bsm" onclick="genTags()" style="white-space:nowrap">Generate Tags</button></div></div>
+<div style="font-size:11px;color:var(--g3);margin-bottom:14px" id="tagPreview"></div>
 <div id="qOut"></div>
+<div class="sh" style="margin-top:20px"><span class="st">Reprint Existing Labels</span></div>
+<div class="fg"><label class="fl">Asset ID</label><input class="fi" type="text" id="reprintId" placeholder="e.g. MAN-LAP-001" style="font-family:'JetBrains Mono',monospace;text-transform:uppercase"></div>
+<button class="btn bs" onclick="reprintLabel()">Reprint Label</button>
 </div>
 
 <!-- SETTINGS -->
@@ -375,7 +378,7 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:var(--b
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <script>
-const DB='manati_assets',SK='manati_settings',EK='manati_employees',UK='manati_user';
+const DB='manati_assets',SK='manati_settings',EK='manati_employees',UK='manati_user',TK='manati_tags';
 const API_URL='https://script.google.com/macros/s/AKfycbwyGsInRiF-s40QqFd5jR5FnF8HzqlqxV8oYFcXnYGct0dYMP9XIHj6LzfmCC0PuaSP/exec';
 const ld=k=>{try{return JSON.parse(localStorage.getItem(k))||[]}catch{return[]}};
 const sv=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
@@ -423,6 +426,7 @@ function nav(s){
   document.querySelectorAll('.nn').forEach(n=>n.classList.remove('on'));
   const n=document.querySelector('.nn[data-s="'+s+'"]');if(n)n.classList.add('on');
   if(s==='home')refH();if(s==='assets')refAL();if(s==='scan')resSc();if(s==='settings')ldCfg();
+  if(s==='generate'){const ids=getNextIds(document.getElementById('tagCat').value,parseInt(document.getElementById('tagCount').value)||1);document.getElementById('tagPreview').textContent='Next: '+ids.join(', ');}
   window.scrollTo(0,0);
 }
 
@@ -443,7 +447,7 @@ function refH(){
   }).join('');
 }
 
-function gId(c){const m={'Laptop':'LAP','Monitor':'MON','UPS':'UPS','Desktop':'DES','Phone':'PHN','Tablet':'TAB','Headset':'HDS','Webcam':'WBC','Keyboard':'KBD','Mouse':'MOU','Charger':'CHR','Other Electronics':'ELC','Desk':'DSK','Chair':'CHR','Filing Cabinet':'FLC','Bookshelf':'BKS','Other Furniture':'FRN','Printer':'PRT','Scanner':'SCN','Projector':'PRJ','Whiteboard':'WBD','Other Equipment':'EQP','Kitchen':'KTC','Keys':'KEY','Safety':'SAF','Other':'OTH'};const p=m[c]||'AST';return 'MAN-'+p+'-'+String(A.filter(a=>a.assetId&&a.assetId.startsWith('MAN-'+p)).length+1).padStart(3,'0');}
+// ID generation now handled by getNextIds in QR tag generator
 
 // ========== SCAN ==========
 function resSc(){['s1','s2','s3'].forEach((x,i)=>document.getElementById(x).style.display=i===0?'block':'none');selE=null;scId=null;pA={};pickedStatus=null;empTypeF='all';document.getElementById('manualIdBox').style.display='none';document.getElementById('camBox').style.display='none';if(strm){strm.getTracks().forEach(t=>t.stop());strm=null;}}
@@ -569,24 +573,62 @@ function refAL(){
     const esc=a.assetId.replace(/'/g,"\\'");
     const checked=bulkSelected.has(a.assetId)?'checked':'';
     const selClass=bulkSelected.has(a.assetId)?' selected':'';
-    return '<div class="ac'+selClass+'" style="cursor:pointer">'+(bulkMode?'<input type="checkbox" class="select-cb" '+checked+' onclick="event.stopPropagation();toggleAssetSelect(\''+esc+'\')" style="display:block">':'')+(isAdmin&&!bulkMode?'<div class="del-btn" onclick="event.stopPropagation();startDelete([\''+esc+'\'])">x</div>':'')+'<div onclick="showAssetInfo(A.find(x=>x.assetId===\''+esc+'\'))"><div class="ah"><span class="aid">'+a.assetId+'</span><span class="ab '+bc+'">'+bt+'</span></div><div class="an">'+(a.description||a.category)+'</div><div class="ads">'+(a.brand?'<span class="ade"><strong>Brand:</strong> '+a.brand+'</span>':'')+(a.serialNumber&&a.serialNumber!=='N/A'?'<span class="ade"><strong>S/N:</strong> '+a.serialNumber+'</span>':'')+(a.assignedTo?'<span class="ade"><strong>></strong> '+a.assignedTo+'</span>':'')+'</div></div></div>';}).join('');
+    return '<div class="ac'+selClass+'" style="cursor:pointer"><div onclick="showAssetInfo(A.find(x=>x.assetId===\''+esc+'\'))"><div class="ah"><span class="aid">'+a.assetId+'</span><span class="ab '+bc+'">'+bt+'</span></div><div class="an">'+(a.description||a.category)+'</div><div class="ads">'+(a.brand?'<span class="ade"><strong>Brand:</strong> '+a.brand+'</span>':'')+(a.serialNumber&&a.serialNumber!=='N/A'?'<span class="ade"><strong>S/N:</strong> '+a.serialNumber+'</span>':'')+(a.assignedTo?'<span class="ade"><strong>></strong> '+a.assignedTo+'</span>':'')+'</div></div><div class="ac-actions">'+(bulkMode?'<input type="checkbox" class="select-cb" '+checked+' onclick="event.stopPropagation();toggleAssetSelect(\''+esc+'\')" style="display:inline-block">':'')+(isAdmin&&!bulkMode?'<div class="del-btn" onclick="event.stopPropagation();startDelete([\''+esc+'\'])">🗑️ Delete</div>':'')+'</div></div>';}).join('');
 }
 function setF(f,el){cF=f;document.querySelectorAll('.fc .ch').forEach(c=>c.classList.remove('on'));el.classList.add('on');refAL();}
 
 // ========== QR LABELS ==========
-function genQR(){
-  const sc=document.getElementById('qSc').value;let ls=[];
-  if(sc==='all')ls=A;
-  else if(sc==='category')ls=A.filter(a=>a.category===document.getElementById('qCat').value);
-  else if(sc==='single'){const id=(document.getElementById('qSingleId').value||'').trim().toUpperCase();if(!id){toast('Enter Asset ID','error');return;}ls=A.filter(a=>a.assetId===id);if(!ls.length){toast('Asset not found','error');return;}}
-  if(!ls.length){toast('No assets to label','error');return;}
+const PMAP={'Laptop':'LAP','Monitor':'MON','UPS':'UPS','Desktop':'DES','Phone':'PHN','Tablet':'TAB','Headset':'HDS','Other Electronics':'ELC','Desk':'DSK','Chair':'CHR','Filing Cabinet':'FLC','Bookshelf':'BKS','Other Furniture':'FRN','Printer':'PRT','Scanner':'SCN','Projector':'PRJ','Whiteboard':'WBD','Other Equipment':'EQP','Kitchen':'KTC','Keys':'KEY','Safety':'SAF','Other':'OTH'};
+let generatedTags=ld(TK);
+
+function getNextIds(category, count){
+  const prefix='MAN-'+(PMAP[category]||'AST');
+  // Find highest number used in assets AND generated tags
+  let max=0;
+  A.forEach(a=>{if(a.assetId&&a.assetId.startsWith(prefix+'-')){const n=parseInt(a.assetId.split('-').pop());if(n>max)max=n;}});
+  generatedTags.forEach(t=>{if(t.startsWith(prefix+'-')){const n=parseInt(t.split('-').pop());if(n>max)max=n;}});
+  const ids=[];
+  for(let i=1;i<=count;i++){ids.push(prefix+'-'+String(max+i).padStart(3,'0'));}
+  return ids;
+}
+
+function genTags(){
+  const cat=document.getElementById('tagCat').value;
+  const count=parseInt(document.getElementById('tagCount').value)||1;
+  if(count<1||count>50){toast('Enter 1-50','error');return;}
+  const ids=getNextIds(cat, count);
+  // Save generated tags so they're tracked
+  ids.forEach(id=>{if(!generatedTags.includes(id))generatedTags.push(id);});
+  sv(TK, generatedTags);
+  // Render QR codes
   const o=document.getElementById('qOut');
   o.innerHTML='<div class="qbg" id="qG"></div><div style="margin-top:14px"><button class="btn bp" onclick="shareQR()">Share to Printer App</button><button class="btn bs" style="margin-top:8px" onclick="window.print()">Print from Browser</button></div>';
   const g=document.getElementById('qG');
-  ls.forEach((a,i)=>{const it=document.createElement('div');it.className='qbi';it.innerHTML='<div id="q-'+i+'"></div><div class="qbl">'+a.assetId+'</div>';g.appendChild(it);
-    setTimeout(()=>{new QRCode(document.getElementById('q-'+i),{text:a.assetId,width:180,height:180,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});},i*50);});
-  toast(ls.length+' labels generated','success');
+  ids.forEach((id,i)=>{const it=document.createElement('div');it.className='qbi';it.innerHTML='<div id="q-'+i+'"></div><div class="qbl">'+id+'</div>';g.appendChild(it);
+    setTimeout(()=>{new QRCode(document.getElementById('q-'+i),{text:id,width:180,height:180,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});},i*50);});
+  toast(ids.length+' tag(s) generated','success');
 }
+
+function reprintLabel(){
+  const id=(document.getElementById('reprintId').value||'').trim().toUpperCase();
+  if(!id){toast('Enter Asset ID','error');return;}
+  const o=document.getElementById('qOut');
+  o.innerHTML='<div class="qbg" id="qG"></div><div style="margin-top:14px"><button class="btn bp" onclick="shareQR()">Share to Printer App</button><button class="btn bs" style="margin-top:8px" onclick="window.print()">Print from Browser</button></div>';
+  const g=document.getElementById('qG');
+  const it=document.createElement('div');it.className='qbi';it.innerHTML='<div id="q-0"></div><div class="qbl">'+id+'</div>';g.appendChild(it);
+  setTimeout(()=>{new QRCode(document.getElementById('q-0'),{text:id,width:180,height:180,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});},50);
+  toast('Label generated','success');
+}
+
+// Update preview when category changes
+document.getElementById('tagCat')?.addEventListener('change',function(){
+  const ids=getNextIds(this.value,parseInt(document.getElementById('tagCount').value)||1);
+  document.getElementById('tagPreview').textContent='Next: '+ids.join(', ');
+});
+document.getElementById('tagCount')?.addEventListener('input',function(){
+  const ids=getNextIds(document.getElementById('tagCat').value,parseInt(this.value)||1);
+  document.getElementById('tagPreview').textContent='Next: '+ids.join(', ');
+});
 async function shareQR(){try{const grid=document.getElementById('qG');const items=grid.querySelectorAll('.qbi');const canvas=document.createElement('canvas');const cols=2,sz=220,pad=12,rows=Math.ceil(items.length/cols);canvas.width=(sz+pad)*cols+pad;canvas.height=(sz+pad)*rows+pad;const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);for(let i=0;i<items.length;i++){const img=items[i].querySelector('canvas')||items[i].querySelector('img');if(img){const x=pad+(i%cols)*(sz+pad),y=pad+Math.floor(i/cols)*(sz+pad);ctx.drawImage(img,x+10,y+10,sz-20,sz-40);ctx.fillStyle='#000';ctx.font='bold 13px monospace';ctx.textAlign='center';ctx.fillText(items[i].querySelector('.qbl').textContent,x+sz/2,y+sz-10);}}canvas.toBlob(async(blob)=>{if(navigator.share){const file=new File([blob],'manati-qr-labels.png',{type:'image/png'});try{await navigator.share({files:[file],title:'Manati QR Labels'});}catch{dlBlob(blob);}}else dlBlob(blob);},'image/png');}catch{toast('Share failed','error');}}
 function dlBlob(b){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='manati-qr-labels.png';a.click();toast('Downloaded','success');}
 
