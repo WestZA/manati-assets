@@ -319,6 +319,8 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:var(--b
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <script>
 const DB='manati_assets',SK='manati_settings',EK='manati_employees';
+const DEFAULT_API='https://script.google.com/macros/s/AKfycbxu4rWpHTnCXkubXKeTyBP976JXkR1C3W2FzhfV4BJaAdFjwb1FsdBBIrYe4Hc9wGr2/exec';
+function getApiUrl(){const s=lo(SK);return s.appsScriptUrl||DEFAULT_API;}
 const ld=k=>{try{return JSON.parse(localStorage.getItem(k))||[]}catch{return[]}};
 const sv=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
 const lo=k=>{try{return JSON.parse(localStorage.getItem(k))||{}}catch{return{}}};
@@ -577,9 +579,9 @@ async function shareQR(){
 function dlBlob(b){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='manati-qr-labels.png';a.click();toast('Downloaded','success');}
 
 async function push(a){
-  const s=lo(SK);if(!s.appsScriptUrl)return;
+  const url=getApiUrl();if(!url)return;
   try{
-    await fetch(s.appsScriptUrl,{
+    await fetch(url,{
       method:'POST',
       redirect:'follow',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
@@ -588,30 +590,30 @@ async function push(a){
     uSt(true);
   }catch(e){
     try{
-      await fetch(s.appsScriptUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'upsert',asset:a})});
+      await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'upsert',asset:a})});
       uSt(true);
     }catch{uSt(false);}
   }
 }
 
 async function pushEmployee(emp){
-  const s=lo(SK);if(!s.appsScriptUrl)return;
+  const url=getApiUrl();if(!url)return;
   try{
-    await fetch(s.appsScriptUrl,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'upsert_employee',employee:{name:emp.name,dept:emp.dept,staffType:emp.staffType}})});
+    await fetch(url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'upsert_employee',employee:{name:emp.name,dept:emp.dept,staffType:emp.staffType}})});
   }catch{}
 }
 
 async function deleteEmployee(name){
-  const s=lo(SK);if(!s.appsScriptUrl)return;
+  const url=getApiUrl();if(!url)return;
   try{
-    await fetch(s.appsScriptUrl,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'delete_employee',name:name})});
+    await fetch(url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'delete_employee',name:name})});
   }catch{}
 }
 
 async function syncFromSheet(){
-  const s=lo(SK);if(!s.appsScriptUrl)return;
+  const url=getApiUrl();if(!url)return;
   try{
-    const r=await fetch(s.appsScriptUrl+'?action=get_all',{method:'GET',redirect:'follow'});
+    const r=await fetch(url+'?action=get_all',{method:'GET',redirect:'follow'});
     const d=await r.json();
     if(d.success){
       if(d.assets&&d.assets.length){A=d.assets;sv(DB,A);}
