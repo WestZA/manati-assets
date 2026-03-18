@@ -268,6 +268,8 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:var(--b
 <!-- SETTINGS -->
 <div class="screen" id="screen-settings">
 <h2 style="font-size:18px;font-weight:700;margin-bottom:14px">Settings</h2>
+<div class="sh"><span class="st">Google Sheets</span></div>
+<div class="sg"><div style="padding:14px"><input class="fi" type="text" id="cfUrl" placeholder="Apps Script Web App URL (optional - already built in)" style="font-size:12px;font-family:'JetBrains Mono',monospace"><div class="fh">Only change this if you redeploy the Apps Script</div></div></div>
 <div class="sh"><span class="st">Claude API (Serial OCR)</span></div>
 <div class="sg"><div style="padding:14px"><input class="fi" type="password" id="cfKey" placeholder="sk-ant-..." style="font-size:12px;font-family:'JetBrains Mono',monospace"><div class="fh">For reading serial numbers from photos</div></div></div>
 <div class="sh"><span class="st">Employees</span></div>
@@ -638,8 +640,8 @@ function rEM(){const el=document.getElementById('emL'),ls=E.filter(e=>e.id!=='u'
 function addE(){const n=document.getElementById('nEN').value.trim(),d=document.getElementById('nED').value,t=document.getElementById('nET').value;if(!n){toast('Enter name','error');return;}const emp={name:n,dept:d,staffType:t,id:'e-'+Date.now()};E.push(emp);sv(EK,E);pushEmployee(emp);document.getElementById('nEN').value='';rEM();toast('Added '+n,'success');}
 function remE(i){if(i<1||i>=E.length)return;if(confirm('Remove '+E[i].name+'?')){const name=E[i].name;E.splice(i,1);sv(EK,E);deleteEmployee(name);rEM();}}
 
-function ldCfg(){const s=lo(SK);document.getElementById('cfKey').value=s.claudeApiKey||'';}
-function savCfg(){const s={claudeApiKey:document.getElementById('cfKey').value.trim()};localStorage.setItem(SK,JSON.stringify(s));C=s;toast('Settings saved — syncing data...','success');syncFromSheet();}
+function ldCfg(){const s=lo(SK);document.getElementById('cfUrl').value=s.appsScriptUrl||'';document.getElementById('cfKey').value=s.claudeApiKey||'';}
+function savCfg(){const s={appsScriptUrl:document.getElementById('cfUrl').value.trim(),claudeApiKey:document.getElementById('cfKey').value.trim()};localStorage.setItem(SK,JSON.stringify(s));C=s;toast('Settings saved — syncing data...','success');syncFromSheet();}
 function expD(){const d={assets:A,employees:E,settings:lo(SK),exported:new Date().toISOString()};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:'application/json'}));a.download='manati-assets-'+new Date().toISOString().split('T')[0]+'.json';a.click();}
 function clrD(){if(confirm('Delete ALL data? Cannot be undone.')){if(confirm('Absolutely sure?')){localStorage.removeItem(DB);localStorage.removeItem(EK);A=[];E=[{name:'Unassigned',dept:'N/A',id:'u'}];sv(EK,E);toast('All data cleared','success');nav('home');}}}
 
