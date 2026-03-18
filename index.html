@@ -332,7 +332,7 @@ function nav(s){
   document.getElementById('screen-'+s).classList.add('active');
   document.querySelectorAll('.nn').forEach(n=>n.classList.remove('on'));
   const n=document.querySelector('.nn[data-s="'+s+'"]');if(n)n.classList.add('on');
-  if(s==='home')refH();if(s==='assets')refAL();if(s==='scan')resSc();if(s==='settings')ldCfg();
+  if(s==='home'){refH();syncFromSheet();}if(s==='assets')refAL();if(s==='scan')resSc();if(s==='settings')ldCfg();
   window.scrollTo(0,0);
 }
 
@@ -576,7 +576,54 @@ async function shareQR(){
 }
 function dlBlob(b){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='manati-qr-labels.png';a.click();toast('Downloaded','success');}
 
-async function push(a){const s=lo(SK);if(!s.appsScriptUrl)return;try{await fetch(s.appsScriptUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'upsert',asset:a})});uSt(true);}catch{uSt(false);}}
+async function push(a){
+  const s=lo(SK);if(!s.appsScriptUrl)return;
+  try{
+    await fetch(s.appsScriptUrl,{
+      method:'POST',
+      redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'upsert',asset:a})
+    });
+    uSt(true);
+  }catch(e){
+    try{
+      await fetch(s.appsScriptUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'upsert',asset:a})});
+      uSt(true);
+    }catch{uSt(false);}
+  }
+}
+
+async function pushEmployee(emp){
+  const s=lo(SK);if(!s.appsScriptUrl)return;
+  try{
+    await fetch(s.appsScriptUrl,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'upsert_employee',employee:{name:emp.name,dept:emp.dept,staffType:emp.staffType}})});
+  }catch{}
+}
+
+async function deleteEmployee(name){
+  const s=lo(SK);if(!s.appsScriptUrl)return;
+  try{
+    await fetch(s.appsScriptUrl,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'delete_employee',name:name})});
+  }catch{}
+}
+
+async function syncFromSheet(){
+  const s=lo(SK);if(!s.appsScriptUrl)return;
+  try{
+    const r=await fetch(s.appsScriptUrl+'?action=get_all',{method:'GET',redirect:'follow'});
+    const d=await r.json();
+    if(d.success){
+      if(d.assets&&d.assets.length){A=d.assets;sv(DB,A);}
+      if(d.employees&&d.employees.length){
+        E=[{name:'Unassigned',dept:'N/A',id:'u'},...d.employees];
+        sv(EK,E);
+      }
+      refH();
+      uSt(true);
+    }
+  }catch(e){console.error('Sync failed:',e);uSt(false);}
+}
 
 function openEM(){emFilter='all';rEM();document.getElementById('emMo').classList.add('active');}
 function clMo(){document.getElementById('emMo').classList.remove('active');}
@@ -588,11 +635,11 @@ function rEM(){const el=document.getElementById('emL'),ls=E.filter(e=>e.id!=='u'
     const ini=e.name.split(' ').map(n=>n[0]).join('').substring(0,2);
     const tbc=e.staffType==='Temporary'?'bo':e.staffType==='Student Hero'?'bn':'ba';
     return '<div class="ei" style="margin-bottom:5px"><div class="ea">'+ini+'</div><div class="eif"><div class="enm">'+e.name+'</div><div class="edp">'+e.dept+' <span class="ab '+tbc+'" style="margin-left:4px">'+(e.staffType||'Permanent')+'</span></div></div><span style="color:var(--red);cursor:pointer;font-size:18px;padding:4px" onclick="remE('+idx+')">x</span></div>';}).join('');}
-function addE(){const n=document.getElementById('nEN').value.trim(),d=document.getElementById('nED').value,t=document.getElementById('nET').value;if(!n){toast('Enter name','error');return;}E.push({name:n,dept:d,staffType:t,id:'e-'+Date.now()});sv(EK,E);document.getElementById('nEN').value='';rEM();toast('Added '+n,'success');}
-function remE(i){if(i<1||i>=E.length)return;if(confirm('Remove '+E[i].name+'?')){E.splice(i,1);sv(EK,E);rEM();}}
+function addE(){const n=document.getElementById('nEN').value.trim(),d=document.getElementById('nED').value,t=document.getElementById('nET').value;if(!n){toast('Enter name','error');return;}const emp={name:n,dept:d,staffType:t,id:'e-'+Date.now()};E.push(emp);sv(EK,E);pushEmployee(emp);document.getElementById('nEN').value='';rEM();toast('Added '+n,'success');}
+function remE(i){if(i<1||i>=E.length)return;if(confirm('Remove '+E[i].name+'?')){const name=E[i].name;E.splice(i,1);sv(EK,E);deleteEmployee(name);rEM();}}
 
 function ldCfg(){const s=lo(SK);document.getElementById('cfUrl').value=s.appsScriptUrl||'';document.getElementById('cfKey').value=s.claudeApiKey||'';}
-function savCfg(){const s={appsScriptUrl:document.getElementById('cfUrl').value.trim(),claudeApiKey:document.getElementById('cfKey').value.trim()};localStorage.setItem(SK,JSON.stringify(s));C=s;toast('Settings saved','success');}
+function savCfg(){const s={appsScriptUrl:document.getElementById('cfUrl').value.trim(),claudeApiKey:document.getElementById('cfKey').value.trim()};localStorage.setItem(SK,JSON.stringify(s));C=s;toast('Settings saved — syncing data...','success');syncFromSheet();}
 function expD(){const d={assets:A,employees:E,settings:lo(SK),exported:new Date().toISOString()};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:'application/json'}));a.download='manati-assets-'+new Date().toISOString().split('T')[0]+'.json';a.click();}
 function clrD(){if(confirm('Delete ALL data? Cannot be undone.')){if(confirm('Absolutely sure?')){localStorage.removeItem(DB);localStorage.removeItem(EK);A=[];E=[{name:'Unassigned',dept:'N/A',id:'u'}];sv(EK,E);toast('All data cleared','success');nav('home');}}}
 
@@ -605,6 +652,8 @@ if('serviceWorker' in navigator)window.addEventListener('load',async()=>{try{awa
 window.addEventListener('online',()=>uSt(true));
 window.addEventListener('offline',()=>uSt(false));
 refH();uSt(navigator.onLine);
+// Sync data from Google Sheet on startup
+syncFromSheet();
 </script>
 </body>
 </html>
